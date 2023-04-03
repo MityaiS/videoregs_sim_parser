@@ -1,13 +1,13 @@
 import csv
 import phonenumbers
 
-mts_file = open("mts.csv", "r", encoding='windows-1251', newline="")
+mts_file = open("mts.csv", "r", encoding='utf-8-sig', newline="")
 mts_reader = csv.DictReader(mts_file, delimiter=";")
 
-meg_file = open("meg.csv", "r", encoding='windows-1251', newline="")
+meg_file = open("meg.csv", "r", encoding='utf-8-sig', newline="")
 meg_reader = csv.DictReader(meg_file, delimiter=";")
 
-tele2_file = open("tele2.csv", "r", encoding='windows-1251', newline="")
+tele2_file = open("tele2.csv", "r", encoding='utf-8-sig', newline="")
 tele2_reader = csv.DictReader(tele2_file, delimiter=";")
 
 summary_file = open("summary.csv", "w", encoding="windows-1251", newline="")
@@ -15,18 +15,29 @@ fieldnames = ["Клиент", "МТС Акт", "Мегафон Акт", "Тел�
               "Акт сим", "Ост сим", "МТС начисл", "Мегафон начисл", "Теле2 начисл", "Итого"]
 sum_writer = csv.DictWriter(summary_file, fieldnames=fieldnames, delimiter=";")
 
+regs_list = []
 summary = {}
+reg_phones = []
+found_phones = []
 
-regs_file = open("reg.csv", "r", encoding='windows-1251')
+regs_file = open("reg.csv", "r", encoding='utf-8-sig')
 regs_reader = csv.DictReader(regs_file, delimiter=";")
 
 for line in regs_reader:
+
     summary[line["Компания"]] = {}
     for oper in ("mts", "meg", "tele2"):
         summary[line["Компания"]][oper] = {}
         for status in ("active", "stoped"):
             summary[line["Компания"]][oper][status] = 0
         summary[line["Компания"]][oper]["cons"] = 0
+
+    try:
+        line["SIM Card Number"] = phonenumbers.parse(line["SIM Card Number"], "RU")
+    except phonenumbers.NumberParseException:
+        line["SIM Card Number"] = None
+
+    regs_list.append(line)
 
 
 for line_mts in mts_reader:
@@ -36,17 +47,13 @@ for line_mts in mts_reader:
     except phonenumbers.NumberParseException:
         continue
 
-    regs_file = open("reg.csv", "r", encoding='windows-1251')
-    regs_reader = csv.DictReader(regs_file, delimiter=";")
+    for line_regs in regs_list:
 
-    for line_regs in regs_reader:
-
-        try:
-            reg_phone = phonenumbers.parse(line_regs["SIM Card Number"], "RU")
-        except phonenumbers.NumberParseException:
-            continue
+        reg_phone = line_regs["SIM Card Number"]
 
         if mts_phone == reg_phone:
+            found_phones.append(reg_phone)
+
             cons = float(line_mts["Общие затраты руб."].replace(",", "."))
             if cons == 0:
                 summary[line_regs["Компания"]]["mts"]["stoped"] += 1
@@ -61,17 +68,13 @@ for line_meg in meg_reader:
     except phonenumbers.NumberParseException:
         continue
 
-    regs_file = open("reg.csv", "r", encoding='windows-1251')
-    regs_reader = csv.DictReader(regs_file, delimiter=";")
+    for line_regs in regs_list:
 
-    for line_regs in regs_reader:
-
-        try:
-            reg_phone = phonenumbers.parse(line_regs["SIM Card Number"], "RU")
-        except phonenumbers.NumberParseException:
-            continue
+        reg_phone = line_regs["SIM Card Number"]
 
         if reg_phone == meg_phone:
+            found_phones.append(reg_phone)
+
             cons = float(line_meg["Всего"].replace(",", "."))
             if cons == 0:
                 summary[line_regs["Компания"]]["meg"]["stoped"] += 1
@@ -86,17 +89,13 @@ for line_tele2 in tele2_reader:
     except phonenumbers.NumberParseException:
         continue
 
-    regs_file = open("reg.csv", "r", encoding='windows-1251')
-    regs_reader = csv.DictReader(regs_file, delimiter=";")
+    for line_regs in regs_list:
 
-    for line_regs in regs_reader:
-
-        try:
-            reg_phone = phonenumbers.parse(line_regs["SIM Card Number"], "RU")
-        except phonenumbers.NumberParseException:
-            continue
+        reg_phone = line_regs["SIM Card Number"]
 
         if tele2_phone == reg_phone:
+            found_phones.append(reg_phone)
+
             cons = float(line_tele2["Начисления"].replace(",", "."))
             if line_tele2["Статус"] == "Приостановлен":
                 summary[line_regs["Компания"]]["tele2"]["stoped"] += 1
@@ -119,3 +118,24 @@ for client_name, client in summary.items():
             "Мегафон начисл": client["meg"]["cons"], "Теле2 начисл": client["tele2"]["cons"], "Итого": sum_cons}
             
     sum_writer.writerow(line)
+
+
+for line_regs in regs_list:
+    found = False
+
+    regs_phone = line_regs["SIM Card Number"]
+    if regs_phone == None:
+        continue
+
+    for found_phone in found_phones:
+        if regs_phone == found_phone:
+            found = True
+            break
+
+    if found:
+        continue
+
+    phone_string = phonenumbers.format_number(regs_phone, phonenumbers.PhoneNumberFormat.E164)[1:]
+    org = line_regs["Компания"]
+    print(f"Did not find: {phone_string}({org})")
+    
