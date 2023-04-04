@@ -1,13 +1,16 @@
 import csv
 import phonenumbers
+import os
 
-mts_file = open("mts.csv", "r", encoding='utf-8-sig', newline="")
+source_path = os.path.dirname(__file__) + "\\source_csv"
+
+mts_file = open(source_path+"\\mts.csv", "r", encoding='utf-8-sig', newline="")
 mts_reader = csv.DictReader(mts_file, delimiter=";")
 
-meg_file = open("meg.csv", "r", encoding='utf-8-sig', newline="")
+meg_file = open(source_path+"\\meg.csv", "r", encoding='utf-8-sig', newline="")
 meg_reader = csv.DictReader(meg_file, delimiter=";")
 
-tele2_file = open("tele2.csv", "r", encoding='utf-8-sig', newline="")
+tele2_file = open(source_path+"\\tele2.csv", "r", encoding='utf-8-sig', newline="")
 tele2_reader = csv.DictReader(tele2_file, delimiter=";")
 
 summary_file = open("summary.csv", "w", encoding="windows-1251", newline="")
@@ -20,7 +23,7 @@ summary = {}
 reg_phones = []
 found_phones = []
 
-regs_file = open("reg.csv", "r", encoding='utf-8-sig')
+regs_file = open(source_path+"\\reg.csv", "r", encoding='utf-8-sig')
 regs_reader = csv.DictReader(regs_file, delimiter=";")
 
 for line in regs_reader:
@@ -103,7 +106,7 @@ for line_tele2 in tele2_reader:
                 summary[line_regs["Компания"]]["tele2"]["active"] += 1
             summary[line_regs["Компания"]]["tele2"]["cons"] += cons
 
-print(summary)
+# print(summary)
 
 sum_writer.writeheader()
 for client_name, client in summary.items():
@@ -119,6 +122,10 @@ for client_name, client in summary.items():
             
     sum_writer.writerow(line)
 
+print("Файл с данными находится в summary.csv")
+
+# print("Хотите ли вы видеть симки видеорегистраторов по которым расход равен нулю?(Да\нет)")
+# ans = input()
 
 for line_regs in regs_list:
     found = False
@@ -137,5 +144,4 @@ for line_regs in regs_list:
 
     phone_string = phonenumbers.format_number(regs_phone, phonenumbers.PhoneNumberFormat.E164)[1:]
     org = line_regs["Компания"]
-    print(f"Did not find: {phone_string}({org})")
-    
+    print(f"Не нашел симку {phone_string} у {org}")
