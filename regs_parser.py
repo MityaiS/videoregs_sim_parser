@@ -145,3 +145,5 @@ for line_regs in regs_list:
     phone_string = phonenumbers.format_number(regs_phone, phonenumbers.PhoneNumberFormat.E164)[1:]
     org = line_regs["Компания"]
     print(f"Не нашел симку {phone_string} у {org}")
+
+input()
