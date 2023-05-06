@@ -2,15 +2,15 @@ import csv
 import phonenumbers
 import os
 
-source_path = os.path.dirname(__file__) + "\\source_csv"
+source_path = os.path.join(os.path.dirname(__file__), "source_csv")
 
-mts_file = open(source_path+"\\mts.csv", "r", encoding='utf-8-sig', newline="")
+mts_file = open(os.path.join(source_path, "mts.csv"), "r", encoding='utf-8-sig', newline="")
 mts_reader = csv.DictReader(mts_file, delimiter=";")
 
-meg_file = open(source_path+"\\meg.csv", "r", encoding='utf-8-sig', newline="")
+meg_file = open(os.path.join(source_path, "meg.csv"), "r", encoding='utf-8-sig', newline="")
 meg_reader = csv.DictReader(meg_file, delimiter=";")
 
-tele2_file = open(source_path+"\\tele2.csv", "r", encoding='utf-8-sig', newline="")
+tele2_file = open(os.path.join(source_path, "tele2.csv"), "r", encoding='utf-8-sig', newline="")
 tele2_reader = csv.DictReader(tele2_file, delimiter=";")
 
 summary_file = open("summary.csv", "w", encoding="windows-1251", newline="")
@@ -23,7 +23,7 @@ summary = {}
 reg_phones = []
 found_phones = []
 
-regs_file = open(source_path+"\\reg.csv", "r", encoding='utf-8-sig')
+regs_file = open(os.path.join(source_path, "reg.csv"), "r", encoding='utf-8-sig')
 regs_reader = csv.DictReader(regs_file, delimiter=";")
 
 for line in regs_reader:
@@ -117,9 +117,10 @@ for client_name, client in summary.items():
 
     line = {"Клиент": client_name, "МТС Акт": client["mts"]["active"], "Мегафон Акт": client["meg"]["active"],
             "Теле2 Акт": client["tele2"]["active"], "МТС Ост": client["mts"]["stoped"], "Мегафон Ост": client["meg"]["stoped"],
-            "Теле2 Ост": client["tele2"]["stoped"], "Акт сим": active_sims, "Ост сим": stoped_sims, "МТС начисл": client["mts"]["cons"],
-            "Мегафон начисл": client["meg"]["cons"], "Теле2 начисл": client["tele2"]["cons"], "Итого": sum_cons}
-            
+            "Теле2 Ост": client["tele2"]["stoped"], "Акт сим": active_sims, "Ост сим": stoped_sims,
+            "МТС начисл": client["mts"]["cons"], "Мегафон начисл": client["meg"]["cons"],
+            "Теле2 начисл": client["tele2"]["cons"], "Итого": sum_cons}
+
     sum_writer.writerow(line)
 
 print("Файл с данными находится в summary.csv")
@@ -131,7 +132,7 @@ for line_regs in regs_list:
     found = False
 
     regs_phone = line_regs["SIM Card Number"]
-    if regs_phone == None:
+    if regs_phone is None:
         continue
 
     for found_phone in found_phones:
