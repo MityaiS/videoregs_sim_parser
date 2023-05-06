@@ -2,3 +2,4 @@ venv
 source_csv
 summary.csv
 test.py
+regs_parser.exe
